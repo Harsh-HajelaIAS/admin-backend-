@@ -11,71 +11,44 @@ const authRoutes = require('./routes/authRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-/* =======================
-   ✅ CORS CONFIG (FIXED)
-======================= */
+// ✅ CORS – IMPORTANT (Preflight allow)
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://admin-frontend-gamma-ten.vercel.app',
-    'https://admin-frontend-git-main-harshs-projects-f32e0299.vercel.app'
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: '*',
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Handle preflight requests
+// ✅ Handle OPTIONS globally
 app.options('*', cors());
 
-/* =======================
-   MIDDLEWARE
-======================= */
 app.use(express.json());
 
-/* =======================
-   UPLOADS FOLDER
-======================= */
+// Uploads folder
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
-
 app.use('/uploads', express.static(uploadDir));
 
-/* =======================
-   ROUTES
-======================= */
-app.use('/api/auth', authRoutes);
+// ✅ Routes (ONLY THESE)
 app.use('/api/forms', formRoutes);
+app.use('/api/auth', authRoutes);
 
-/* =======================
-   HEALTH CHECK
-======================= */
+// Health check
 app.get('/', (req, res) => {
   const dbState = mongoose.connection.readyState;
   res.json({
     status: 'API is running',
-    dbState: dbState === 1 ? 'Connected' : 'Disconnected/Connecting'
+    dbState: dbState === 1 ? 'Connected' : 'Disconnected',
   });
 });
 
-/* =======================
-   DATABASE
-======================= */
-const MONGO_URI = process.env.MONGO_URI;
+// MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('MongoDB Connected Successfully'))
+  .catch(err => console.error('MongoDB error:', err));
 
-mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log('MongoDB Connected Successfully');
-  })
-  .catch(err => {
-    console.error('MongoDB connection error:', err);
-  });
-
-/* =======================
-   START SERVER
-======================= */
+// Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
