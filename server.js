@@ -11,49 +11,71 @@ const authRoutes = require('./routes/authRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors()); // Allow all origins by default for easier local dev
+/* =======================
+   ✅ CORS CONFIG (FIXED)
+======================= */
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://admin-frontend-gamma-ten.vercel.app',
+    'https://admin-frontend-git-main-harshs-projects-f32e0299.vercel.app'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Handle preflight requests
+app.options('*', cors());
+
+/* =======================
+   MIDDLEWARE
+======================= */
 app.use(express.json());
 
-// Create uploads directory if it doesn't exist
+/* =======================
+   UPLOADS FOLDER
+======================= */
 const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)){
-    fs.mkdirSync(uploadDir, { recursive: true });
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Static files for uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadDir));
 
-// Routes
-app.use('/api/forms', formRoutes);
+/* =======================
+   ROUTES
+======================= */
 app.use('/api/auth', authRoutes);
+app.use('/api/forms', formRoutes);
 
-// Health check
+/* =======================
+   HEALTH CHECK
+======================= */
 app.get('/', (req, res) => {
-  const dbState = mongoose.connection.readyState; // 0: disconnected, 1: connected, 2: connecting, 3: disconnecting
-  res.json({ 
-    status: 'API is running', 
-    dbState: dbState === 1 ? 'Connected' : 'Disconnected/Connecting' 
+  const dbState = mongoose.connection.readyState;
+  res.json({
+    status: 'API is running',
+    dbState: dbState === 1 ? 'Connected' : 'Disconnected/Connecting'
   });
 });
 
-// Database Connection
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://harshitwanjare_db_user:JbEa0pyul8rAZ4PD@cluster0.fmffgcn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+/* =======================
+   DATABASE
+======================= */
+const MONGO_URI = process.env.MONGO_URI;
 
-// Connect to MongoDB
-// We don't block app.listen so the frontend doesn't get "Connection Refused"
 mongoose.connect(MONGO_URI)
   .then(() => {
     console.log('MongoDB Connected Successfully');
   })
   .catch(err => {
     console.error('MongoDB connection error:', err);
-    console.log('Retrying connection in 5 seconds...');
-    // Simple retry logic could be added here if needed
   });
 
-// Start Server immediately
+/* =======================
+   START SERVER
+======================= */
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Test API at: http://localhost:${PORT}/`);
 });
