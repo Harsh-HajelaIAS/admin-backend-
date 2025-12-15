@@ -9,17 +9,14 @@ const formRoutes = require('./routes/formRoutes');
 const authRoutes = require('./routes/authRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 
-// ✅ CORS – IMPORTANT (Preflight allow)
+// ✅ CORS (important)
 app.use(cors({
   origin: '*',
-  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET','POST','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization']
 }));
-
-// ✅ Handle OPTIONS globally
-app.options('*', cors());
 
 app.use(express.json());
 
@@ -30,25 +27,24 @@ if (!fs.existsSync(uploadDir)) {
 }
 app.use('/uploads', express.static(uploadDir));
 
-// ✅ Routes (ONLY THESE)
+// ✅ ROUTES
 app.use('/api/forms', formRoutes);
 app.use('/api/auth', authRoutes);
 
 // Health check
 app.get('/', (req, res) => {
-  const dbState = mongoose.connection.readyState;
   res.json({
     status: 'API is running',
-    dbState: dbState === 1 ? 'Connected' : 'Disconnected',
+    dbState: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
   });
 });
 
-// MongoDB
+// Mongo
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB Connected Successfully'))
-  .catch(err => console.error('MongoDB error:', err));
+  .then(() => console.log('MongoDB Connected'))
+  .catch(err => console.error(err));
 
-// Start server
+// Start
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
