@@ -11,40 +11,47 @@ const authRoutes = require('./routes/authRoutes');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// ✅ CORS (important)
+/* =======================
+   ✅ CORS (FIXED)
+======================= */
 app.use(cors({
   origin: '*',
-  methods: ['GET','POST','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization']
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
+app.options('*', cors()); // 🔥 VERY IMPORTANT
 
-// Uploads folder
+/* =======================
+   Uploads
+======================= */
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 app.use('/uploads', express.static(uploadDir));
 
-// ✅ ROUTES
+/* =======================
+   Routes
+======================= */
 app.use('/api/forms', formRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);   // ✅ ONLY THIS
 
-// Health check
+/* =======================
+   Health Check
+======================= */
 app.get('/', (req, res) => {
-  res.json({
-    status: 'API is running',
-    dbState: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
-  });
+  res.json({ status: 'API is running', dbState: 'Connected' });
 });
 
-// Mongo
+/* =======================
+   MongoDB
+======================= */
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB Connected'))
+  .then(() => console.log('MongoDB Connected Successfully'))
   .catch(err => console.error(err));
 
-// Start
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
